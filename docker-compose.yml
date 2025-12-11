@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    # Для GPU раскомментируй:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  chat-server:
+    build: .
+    container_name: llm-chat-server
+    depends_on:
+      - ollama
+    environment:
+      - SERVER_PORT=8080
+      - SERVER_HOST=0.0.0.0
+      - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_MODEL=tinyllama
+      - SYSTEM_PROMPT=You are a helpful assistant. Answer concisely.
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  ollama_data:

@@ -1,0 +1,23 @@
+Starting LLM Chat Server (local mode)...
+
+Configuration:
+  Server: http://0.0.0.0:8080
+  Ollama: http://localhost:11434
+  Model: tinyllama
+
+java version "17.0.2" 2022-01-18 LTS
+Java(TM) SE Runtime Environment (build 17.0.2+8-LTS-86)
+Java HotSpot(TM) 64-Bit Server VM (build 17.0.2+8-LTS-86, mixed mode, sharing)
+01:55:41.247 [main] INFO  ktor.application - Autoreload is disabled because the development mode is off.
+╔════════════════════════════════════════╗
+║       LLM Chat Server (Ollama)         ║
+╚════════════════════════════════════════╝
+
+Server: http://0.0.0.0:8080
+Model: tinyllama
+Ollama: http://localhost:11434
+
+Ready to accept requests...
+
+01:55:41.280 [main] INFO  ktor.application - Application started in 0.05 seconds.
+01:55:41.350 [DefaultDispatcher-worker-1] INFO  ktor.application - Responding at http://0.0.0.0:8080

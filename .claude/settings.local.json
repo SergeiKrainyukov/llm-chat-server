@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(lsof:*)",
+      "Bash(pgrep:*)",
+      "Bash(chmod:*)",
+      "Bash(./gradlew build:*)",
+      "Bash(kill:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(xargs kill:*)",
+      "Bash(python3:*)",
+      "Bash(./test-api.sh:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
