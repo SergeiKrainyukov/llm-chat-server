@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header .status {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            word-wrap: break-word;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant .message-content {
+            background: white;
+            color: #333;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .message.system {
+            justify-content: center;
+        }
+
+        .message.system .message-content {
+            background: #e3f2fd;
+            color: #1976d2;
+            font-size: 12px;
+            max-width: 90%;
+        }
+
+        .input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-container input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .input-container input:focus {
+            border-color: #667eea;
+        }
+
+        .input-container button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .input-container button:hover {
+            transform: scale(1.05);
+        }
+
+        .input-container button:active {
+            transform: scale(0.95);
+        }
+
+        .input-container button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            font-size: 14px;
+            padding: 10px;
+        }
+
+        .loading.active {
+            display: flex;
+        }
+
+        .loading-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .loading-dots span {
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .loading-dots span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .loading-dots span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+            }
+            40% {
+                transform: scale(1);
+            }
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 20px;
+            background: #f9f9f9;
+            border-top: 1px solid #e0e0e0;
+            font-size: 12px;
+        }
+
+        .controls button {
+            padding: 6px 12px;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: background 0.2s;
+        }
+
+        .controls button:hover {
+            background: #e0e0e0;
+        }
+
+        .server-config {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .server-config input {
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 11px;
+            width: 180px;
+        }
+
+        .session-info {
+            color: #666;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 LLM Chat</h1>
+            <div class="status">Powered by Ollama</div>
+        </div>
+
+        <div class="controls">
+            <div class="server-config">
+                <label>Server:</label>
+                <input type="text" id="serverUrl" value="http://45.144.30.160:8080" placeholder="Server URL">
+                <button onclick="testConnection()">Test</button>
+            </div>
+            <div class="session-info">
+                Session: <span id="sessionId">-</span>
+            </div>
+            <button onclick="clearChat()">🗑 Clear</button>
+        </div>
+
+        <div class="chat-container" id="chatContainer">
+            <div class="message system">
+                <div class="message-content">
+                    👋 Привет! Я готов к общению. Задай мне любой вопрос!
+                </div>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="loading-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <span>AI думает...</span>
+        </div>
+
+        <div class="input-container">
+            <input
+                type="text"
+                id="messageInput"
+                placeholder="Напишите сообщение..."
+                onkeypress="handleKeyPress(event)"
+            >
+            <button onclick="sendMessage()" id="sendButton">Отправить</button>
+        </div>
+    </div>
+
+    <script>
+        let sessionId = null;
+        const chatContainer = document.getElementById('chatContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const loading = document.getElementById('loading');
+        const sessionIdDisplay = document.getElementById('sessionId');
+        const serverUrlInput = document.getElementById('serverUrl');
+
+        function getServerUrl() {
+            return serverUrlInput.value.trim() || 'http://localhost:8080';
+        }
+
+        function addMessage(content, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = content;
+
+            messageDiv.appendChild(contentDiv);
+            chatContainer.appendChild(messageDiv);
+
+            // Scroll to bottom
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            // Add user message to UI
+            addMessage(message, 'user');
+            messageInput.value = '';
+
+            // Disable input
+            sendButton.disabled = true;
+            messageInput.disabled = true;
+            loading.classList.add('active');
+
+            try {
+                const response = await fetch(`${getServerUrl()}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        sessionId: sessionId
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Update session ID
+                if (data.sessionId) {
+                    sessionId = data.sessionId;
+                    sessionIdDisplay.textContent = sessionId.substring(0, 8) + '...';
+                }
+
+                // Add assistant response
+                if (data.response) {
+                    addMessage(data.response, 'assistant');
+                } else if (data.error) {
+                    addMessage(`Ошибка: ${data.error}`, 'system');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage(`Ошибка подключения: ${error.message}`, 'system');
+            } finally {
+                // Re-enable input
+                sendButton.disabled = false;
+                messageInput.disabled = false;
+                loading.classList.remove('active');
+                messageInput.focus();
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        async function clearChat() {
+            if (sessionId) {
+                try {
+                    await fetch(`${getServerUrl()}/session/${sessionId}`, {
+                        method: 'DELETE'
+                    });
+                } catch (error) {
+                    console.error('Error clearing session:', error);
+                }
+            }
+
+            sessionId = null;
+            sessionIdDisplay.textContent = '-';
+            chatContainer.innerHTML = `
+                <div class="message system">
+                    <div class="message-content">
+                        ✨ Чат очищен. Начните новый диалог!
+                    </div>
+                </div>
+            `;
+        }
+
+        async function testConnection() {
+            try {
+                const response = await fetch(`${getServerUrl()}/status`);
+                const data = await response.json();
+
+                if (data.status === 'running') {
+                    addMessage(`✅ Подключено к серверу! Модель: ${data.model}`, 'system');
+                } else {
+                    addMessage('⚠️ Сервер работает, но статус неизвестен', 'system');
+                }
+            } catch (error) {
+                addMessage(`❌ Ошибка подключения: ${error.message}`, 'system');
+            }
+        }
+
+        // Focus on input on load
+        window.onload = () => {
+            messageInput.focus();
+        };
+    </script>
+</body>
+</html>
