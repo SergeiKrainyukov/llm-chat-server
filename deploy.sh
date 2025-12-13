@@ -1,64 +1,119 @@
 #!/bin/bash
 
 # Конфигурация
-REMOTE_USER="your_user"
-REMOTE_HOST="your_server_ip"
-REMOTE_PATH="/path/to/llm-chat-server"
-LOCAL_PATH="/Users/sergeikrainyukov/Desktop/llm-chat-server"
+SERVER_USER="root"
+SERVER_IP="45.144.30.160"
+SERVER_PATH="/llm-chat-server"
 
-echo "🚀 Deploying LLM Chat Server to $REMOTE_HOST..."
+echo "╔════════════════════════════════════════╗"
+echo "║   LLM Chat Server - Quick Deploy      ║"
+echo "╚════════════════════════════════════════╝"
+echo ""
 
-# 1. Синхронизация файлов
-echo "📦 Syncing files..."
-rsync -avz --exclude 'build/' --exclude '.gradle/' --exclude 'server.log' \
-  "$LOCAL_PATH/" \
-  "$REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH/"
-
-if [ $? -ne 0 ]; then
-    echo "❌ Failed to sync files"
-    exit 1
+# Проверка что сборка прошла успешно
+echo "Step 1/6: Building project locally..."
+if ! ./gradlew build --no-daemon -q 2>&1 | grep -q "BUILD SUCCESSFUL\|BUILD FAILED"; then
+    ./gradlew build --no-daemon
 fi
 
-# 2. Деплой на сервере
-echo "🔧 Building and restarting on server..."
-ssh "$REMOTE_USER@$REMOTE_HOST" << 'EOF'
-cd /path/to/llm-chat-server
+if [ $? -ne 0 ]; then
+    echo "❌ Build failed! Fix errors and try again."
+    exit 1
+fi
+echo "✅ Build successful"
+echo ""
 
-# Остановить старый процесс
-echo "Stopping old server..."
-lsof -ti :8080 | xargs kill -9 2>/dev/null || true
+# Синхронизация файлов
+echo "Step 2/6: Syncing files to server..."
+echo "Password for root@$SERVER_IP will be requested..."
+rsync -avz --exclude 'build/' --exclude '.gradle/' --exclude '*.log' --exclude 'nohup.out' \
+    . $SERVER_USER@$SERVER_IP:$SERVER_PATH/
+
+if [ $? -ne 0 ]; then
+    echo "❌ Failed to sync files. Check your connection and credentials."
+    exit 1
+fi
+echo "✅ Files synced"
+echo ""
+
+# Остановка старого процесса
+echo "Step 3/6: Stopping old server process..."
+ssh $SERVER_USER@$SERVER_IP "lsof -ti :8080 | xargs kill -9 2>/dev/null || true"
 sleep 2
+echo "✅ Old process stopped"
+echo ""
 
-# Пересобрать проект
-echo "Building project..."
+# Сборка на сервере
+echo "Step 4/6: Building project on server..."
+ssh $SERVER_USER@$SERVER_IP << 'EOF'
+cd /llm-chat-server
 ./gradlew build --no-daemon -q
-
 if [ $? -ne 0 ]; then
-    echo "❌ Build failed"
+    echo "❌ Build failed on server"
     exit 1
 fi
+echo "✅ Build successful on server"
+EOF
 
-# Запустить сервер
-echo "Starting server..."
+if [ $? -ne 0 ]; then
+    echo "❌ Server build failed!"
+    exit 1
+fi
+echo ""
+
+# Запуск сервера
+echo "Step 5/6: Starting server..."
+ssh $SERVER_USER@$SERVER_IP << 'EOF'
+cd /llm-chat-server
 nohup ./run-local.sh > server.log 2>&1 &
-sleep 5
+sleep 8
 
-# Проверить статус
-if lsof -ti :8080 > /dev/null; then
-    echo "✅ Server started successfully"
-    curl -s http://localhost:8080/status
+# Проверка что процесс запустился
+if lsof -ti :8080 > /dev/null 2>&1; then
+    echo "✅ Server process started"
 else
     echo "❌ Server failed to start"
+    echo "Last 20 lines of log:"
     tail -20 server.log
     exit 1
 fi
 EOF
 
-if [ $? -eq 0 ]; then
-    echo ""
-    echo "✅ Deployment successful!"
-    echo "🌐 Server URL: http://$REMOTE_HOST:8080"
-else
-    echo "❌ Deployment failed"
+if [ $? -ne 0 ]; then
+    echo "❌ Server start failed!"
     exit 1
 fi
+echo ""
+
+# Проверка работоспособности
+echo "Step 6/6: Testing server..."
+sleep 2
+
+# Тест локально на сервере
+ssh $SERVER_USER@$SERVER_IP "curl -s http://localhost:8080/status" > /tmp/server_status.json
+
+if [ $? -eq 0 ]; then
+    echo "✅ Server is responding"
+    echo ""
+    echo "Server status:"
+    cat /tmp/server_status.json | python3 -m json.tool 2>/dev/null || cat /tmp/server_status.json
+    rm -f /tmp/server_status.json
+else
+    echo "⚠️  Server not responding yet"
+    echo "Check logs with: ssh root@$SERVER_IP 'tail -50 /llm-chat-server/server.log'"
+fi
+
+echo ""
+echo "╔════════════════════════════════════════╗"
+echo "║          Deploy Complete!              ║"
+echo "╚════════════════════════════════════════╝"
+echo ""
+echo "🌐 Server URL: http://$SERVER_IP:8080"
+echo "📊 Status: http://$SERVER_IP:8080/status"
+echo "💬 Chat API: http://$SERVER_IP:8080/chat"
+echo ""
+echo "📋 Useful commands:"
+echo "  View logs:    ssh root@$SERVER_IP 'tail -f /llm-chat-server/server.log'"
+echo "  Stop server:  ssh root@$SERVER_IP 'lsof -ti :8080 | xargs kill -9'"
+echo "  Restart:      ./deploy.sh"
+echo ""

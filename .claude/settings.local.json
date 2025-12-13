@@ -12,7 +12,8 @@
       "Bash(python3:*)",
       "Bash(./test-api.sh:*)",
       "Bash(open:*)",
-      "Bash(ssh root@45.144.30.160 \"cd /llm-chat-server && tail -50 server.log\")"
+      "Bash(ssh root@45.144.30.160 \"cd /llm-chat-server && tail -50 server.log\")",
+      "Bash(ssh:*)"
     ],
     "deny": [],
     "ask": []

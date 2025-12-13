@@ -56,22 +56,33 @@ class OllamaClient {
             // Ollama возвращает NDJSON даже с stream=false, читаем как текст
             val responseText = httpResponse.bodyAsText()
 
+            if (responseText.isBlank()) {
+                throw Exception("Empty response from Ollama")
+            }
+
             // Парсим все строки и собираем контент
             val lines = responseText.trim().lines().filter { it.isNotBlank() }
             val fullContent = StringBuilder()
-            var lastResponse: ChatResponse? = null
 
             for (line in lines) {
-                val response = json.decodeFromString<ChatResponse>(line)
-                if (response.message.content.isNotEmpty()) {
-                    fullContent.append(response.message.content)
+                try {
+                    val response = json.decodeFromString<ChatResponse>(line)
+                    if (response.message.content.isNotEmpty()) {
+                        fullContent.append(response.message.content)
+                    }
+                } catch (parseError: Exception) {
+                    // Пропускаем строки которые не парсятся
+                    println("[WARN] Failed to parse line: ${line.take(100)}")
+                    continue
                 }
-                lastResponse = response
             }
 
             val content = fullContent.toString()
-            val assistantMessage = ChatMessage("assistant", content)
+            if (content.isBlank()) {
+                throw Exception("No content in Ollama response. Raw response: ${responseText.take(200)}")
+            }
 
+            val assistantMessage = ChatMessage("assistant", content)
             chatHistory.add(assistantMessage)
             content
         } catch (e: Exception) {

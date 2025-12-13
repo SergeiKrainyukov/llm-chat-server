@@ -17,9 +17,9 @@ data class ChatRequest(
 
 @Serializable
 data class ChatResponse(
-    val model: String,
-    val message: ChatMessage,
-    val done: Boolean
+    val model: String = "",
+    val message: ChatMessage = ChatMessage("assistant", ""),
+    val done: Boolean = false
 )
 
 // API Models for REST endpoints
