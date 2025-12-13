@@ -7,7 +7,7 @@ object AppConfig {
 
     // Ollama настройки - легко менять для разных окружений
     val ollamaHost: String = System.getenv("OLLAMA_HOST") ?: "http://localhost:11434"
-    val modelName: String = System.getenv("OLLAMA_MODEL") ?: "tinyllama"
+    val modelName: String = System.getenv("OLLAMA_MODEL") ?: "gemma2:2b"
 
     // Системный промпт (опционально)
     val systemPrompt: String = System.getenv("SYSTEM_PROMPT")

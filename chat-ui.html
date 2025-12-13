@@ -42,12 +42,51 @@
 
         .header h1 {
             font-size: 24px;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
         }
 
         .header .status {
             font-size: 12px;
             opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .tab {
+            padding: 8px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 20px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .tab-content.active {
+            display: flex;
         }
 
         .chat-container {
@@ -233,59 +272,118 @@
         <div class="header">
             <h1>🤖 LLM Chat</h1>
             <div class="status">Powered by Ollama</div>
-        </div>
-
-        <div class="controls">
-            <div class="session-info">
-                Session: <span id="sessionId">-</span>
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('chat')">💬 Чат</button>
+                <button class="tab" onclick="switchTab('analytics')">📊 Аналитика</button>
             </div>
-            <button onclick="clearChat()">🗑 Clear Chat</button>
         </div>
 
-        <div class="chat-container" id="chatContainer">
-            <div class="message system">
-                <div class="message-content">
-                    👋 Привет! Я готов к общению. Задай мне любой вопрос!
+        <!-- Chat Tab -->
+        <div id="chatTab" class="tab-content active">
+            <div class="controls">
+                <div class="session-info">
+                    Session: <span id="sessionId">-</span>
+                </div>
+                <button onclick="clearChat()">🗑 Clear Chat</button>
+            </div>
+
+            <div class="chat-container" id="chatContainer">
+                <div class="message system">
+                    <div class="message-content">
+                        👋 Привет! Я готов к общению. Задай мне любой вопрос!
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="loading" id="loading">
-            <div class="loading-dots">
-                <span></span>
-                <span></span>
-                <span></span>
+            <div class="loading" id="loading">
+                <div class="loading-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <span>AI думает...</span>
             </div>
-            <span>AI думает...</span>
+
+            <div class="input-container">
+                <input
+                    type="text"
+                    id="messageInput"
+                    placeholder="Напишите сообщение..."
+                    onkeypress="handleKeyPress(event, 'chat')"
+                >
+                <button onclick="sendMessage()" id="sendButton">Отправить</button>
+            </div>
         </div>
 
-        <div class="input-container">
-            <input
-                type="text"
-                id="messageInput"
-                placeholder="Напишите сообщение..."
-                onkeypress="handleKeyPress(event)"
-            >
-            <button onclick="sendMessage()" id="sendButton">Отправить</button>
+        <!-- Analytics Tab -->
+        <div id="analyticsTab" class="tab-content">
+            <div class="controls">
+                <div class="session-info">
+                    Analytics Session: <span id="analyticsSessionId">-</span>
+                </div>
+                <button onclick="clearAnalytics()">🗑 Clear Analytics</button>
+            </div>
+
+            <div class="chat-container" id="analyticsContainer">
+                <div class="message system">
+                    <div class="message-content">
+                        📊 Добро пожаловать в аналитику! Задавайте вопросы о пользователях системы.
+                        <br><br>
+                        Примеры вопросов:
+                        <br>• Сколько всего пользователей?
+                        <br>• Какой средний возраст пользователей?
+                        <br>• Сколько пользователей из Москвы?
+                        <br>• Какая средняя зарплата программистов?
+                    </div>
+                </div>
+            </div>
+
+            <div class="loading" id="analyticsLoading">
+                <div class="loading-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <span>Анализирую данные...</span>
+            </div>
+
+            <div class="input-container">
+                <input
+                    type="text"
+                    id="analyticsInput"
+                    placeholder="Задайте вопрос о данных пользователей..."
+                    onkeypress="handleKeyPress(event, 'analytics')"
+                >
+                <button onclick="sendAnalyticsMessage()" id="analyticsButton">Отправить</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // Конфигурация сервера
-        const SERVER_URL = 'http://45.144.30.160:8080';
+        // Конфигурация сервера (автоопределение локального/удаленного сервера)
+        const SERVER_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:8080'
+            : 'http://45.144.30.160:8080';
 
         let sessionId = null;
+        let analyticsSessionId = null;
         const chatContainer = document.getElementById('chatContainer');
         const messageInput = document.getElementById('messageInput');
         const sendButton = document.getElementById('sendButton');
         const loading = document.getElementById('loading');
         const sessionIdDisplay = document.getElementById('sessionId');
 
+        const analyticsContainer = document.getElementById('analyticsContainer');
+        const analyticsInput = document.getElementById('analyticsInput');
+        const analyticsButton = document.getElementById('analyticsButton');
+        const analyticsLoading = document.getElementById('analyticsLoading');
+        const analyticsSessionIdDisplay = document.getElementById('analyticsSessionId');
+
         function getServerUrl() {
             return SERVER_URL;
         }
 
-        function addMessage(content, type) {
+        function addMessage(content, type, container = chatContainer) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${type}`;
 
@@ -294,10 +392,29 @@
             contentDiv.textContent = content;
 
             messageDiv.appendChild(contentDiv);
-            chatContainer.appendChild(messageDiv);
+            container.appendChild(messageDiv);
 
             // Scroll to bottom
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update tab content
+            document.getElementById('chatTab').classList.remove('active');
+            document.getElementById('analyticsTab').classList.remove('active');
+
+            if (tabName === 'chat') {
+                document.getElementById('chatTab').classList.add('active');
+                messageInput.focus();
+            } else if (tabName === 'analytics') {
+                document.getElementById('analyticsTab').classList.add('active');
+                analyticsInput.focus();
+            }
         }
 
         async function sendMessage() {
@@ -355,10 +472,69 @@
             }
         }
 
-        function handleKeyPress(event) {
+        async function sendAnalyticsMessage() {
+            const message = analyticsInput.value.trim();
+            if (!message) return;
+
+            // Add user message to UI
+            addMessage(message, 'user', analyticsContainer);
+            analyticsInput.value = '';
+
+            // Disable input
+            analyticsButton.disabled = true;
+            analyticsInput.disabled = true;
+            analyticsLoading.classList.add('active');
+
+            try {
+                const response = await fetch(`${getServerUrl()}/analytics/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        sessionId: analyticsSessionId
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Update session ID
+                if (data.sessionId) {
+                    analyticsSessionId = data.sessionId;
+                    analyticsSessionIdDisplay.textContent = analyticsSessionId.substring(0, 8) + '...';
+                }
+
+                // Add assistant response
+                if (data.response) {
+                    addMessage(data.response, 'assistant', analyticsContainer);
+                } else if (data.error) {
+                    addMessage(`Ошибка: ${data.error}`, 'system', analyticsContainer);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage(`Ошибка подключения: ${error.message}`, 'system', analyticsContainer);
+            } finally {
+                // Re-enable input
+                analyticsButton.disabled = false;
+                analyticsInput.disabled = false;
+                analyticsLoading.classList.remove('active');
+                analyticsInput.focus();
+            }
+        }
+
+        function handleKeyPress(event, mode = 'chat') {
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
-                sendMessage();
+                if (mode === 'chat') {
+                    sendMessage();
+                } else if (mode === 'analytics') {
+                    sendAnalyticsMessage();
+                }
             }
         }
 
@@ -379,6 +555,34 @@
                 <div class="message system">
                     <div class="message-content">
                         ✨ Чат очищен. Начните новый диалог!
+                    </div>
+                </div>
+            `;
+        }
+
+        async function clearAnalytics() {
+            if (analyticsSessionId) {
+                try {
+                    await fetch(`${getServerUrl()}/session/${analyticsSessionId}`, {
+                        method: 'DELETE'
+                    });
+                } catch (error) {
+                    console.error('Error clearing session:', error);
+                }
+            }
+
+            analyticsSessionId = null;
+            analyticsSessionIdDisplay.textContent = '-';
+            analyticsContainer.innerHTML = `
+                <div class="message system">
+                    <div class="message-content">
+                        📊 Добро пожаловать в аналитику! Задавайте вопросы о пользователях системы.
+                        <br><br>
+                        Примеры вопросов:
+                        <br>• Сколько всего пользователей?
+                        <br>• Какой средний возраст пользователей?
+                        <br>• Сколько пользователей из Москвы?
+                        <br>• Какая средняя зарплата программистов?
                     </div>
                 </div>
             `;

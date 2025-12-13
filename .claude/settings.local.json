@@ -13,7 +13,17 @@
       "Bash(./test-api.sh:*)",
       "Bash(open:*)",
       "Bash(ssh root@45.144.30.160 \"cd /llm-chat-server && tail -50 server.log\")",
-      "Bash(ssh:*)"
+      "Bash(ssh:*)",
+      "Bash(./deploy.sh:*)",
+      "Bash(sshpass -p \"wOavaBt5H8H2\" ssh root@45.144.30.160 \"find /var/www /usr/share/nginx /llm-chat-server -name ''*.html'' 2>/dev/null\")",
+      "Bash(./fix-ui.sh:*)",
+      "Bash(./update-ui-interactive.sh:*)",
+      "Bash(./redeploy-all.sh:*)",
+      "Bash(ollama serve)",
+      "Bash(./run-local.sh)",
+      "Bash(ollama list:*)",
+      "Bash(export OLLAMA_MODEL=\"qwen2.5:3b\")",
+      "Bash(ollama pull:*)"
     ],
     "deny": [],
     "ask": []
