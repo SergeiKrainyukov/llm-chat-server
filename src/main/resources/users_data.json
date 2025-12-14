@@ -1,0 +1,100 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "Иван Петров",
+      "age": 28,
+      "gender": "male",
+      "marital_status": "married",
+      "city": "Москва",
+      "occupation": "Программист",
+      "salary": 150000,
+      "education": "Высшее",
+      "experience_years": 5,
+      "interests": ["программирование", "игры", "кино"]
+    },
+    {
+      "id": 2,
+      "name": "Мария Иванова",
+      "age": 25,
+      "gender": "female",
+      "marital_status": "single",
+      "city": "Санкт-Петербург",
+      "occupation": "Дизайнер",
+      "salary": 120000,
+      "education": "Высшее",
+      "experience_years": 3,
+      "interests": ["дизайн", "путешествия", "фотография"]
+    },
+    {
+      "id": 3,
+      "name": "Алексей Сидоров",
+      "age": 35,
+      "gender": "male",
+      "marital_status": "married",
+      "city": "Москва",
+      "occupation": "Менеджер",
+      "salary": 180000,
+      "education": "Высшее",
+      "experience_years": 12,
+      "interests": ["бизнес", "спорт", "автомобили"]
+    },
+    {
+      "id": 4,
+      "name": "Елена Смирнова",
+      "age": 30,
+      "gender": "female",
+      "marital_status": "divorced",
+      "city": "Казань",
+      "occupation": "Маркетолог",
+      "salary": 140000,
+      "education": "Высшее",
+      "experience_years": 7,
+      "interests": ["маркетинг", "йога", "чтение"]
+    },
+    {
+      "id": 5,
+      "name": "Дмитрий Козлов",
+      "age": 42,
+      "gender": "male",
+      "marital_status": "married",
+      "city": "Новосибирск",
+      "occupation": "Директор",
+      "salary": 250000,
+      "education": "Высшее",
+      "experience_years": 20,
+      "interests": ["управление", "гольф", "рыбалка"]
+    },
+    {
+      "id": 6,
+      "name": "Анна Волкова",
+      "age": 27,
+      "gender": "female",
+      "marital_status": "single",
+      "city": "Москва",
+      "occupation": "Аналитик",
+      "salary": 130000,
+      "education": "Высшее",
+      "experience_years": 4,
+      "interests": ["аналитика", "музыка", "танцы"]
+    },
+    {
+      "id": 7,
+      "name": "Владимир Егоров",
+      "age": 34,
+      "gender": "male",
+      "marital_status": "married",
+      "city": "Тюмень",
+      "occupation": "Data Scientist",
+      "salary": 200000,
+      "education": "Высшее",
+      "experience_years": 9,
+      "interests": ["data science", "шахматы", "го"]
+    }
+  ],
+  "metadata": {
+    "total_users": 7,
+    "generated_date": "2025-12-14",
+    "description": "Тестовый набор данных пользователей для аналитики"
+  }
+}

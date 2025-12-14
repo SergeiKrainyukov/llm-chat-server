@@ -271,7 +271,7 @@
     <div class="container">
         <div class="header">
             <h1>🤖 LLM Chat</h1>
-            <div class="status">Powered by Ollama</div>
+            <div class="status">Powered by Ollama | <span id="modelName">Loading...</span></div>
             <div class="tabs">
                 <button class="tab active" onclick="switchTab('chat')">💬 Чат</button>
                 <button class="tab" onclick="switchTab('analytics')">📊 Аналитика</button>
@@ -363,7 +363,7 @@
         // Конфигурация сервера (автоопределение локального/удаленного сервера)
         const SERVER_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
             ? 'http://localhost:8080'
-            : 'http://45.144.30.160:8080';
+            : 'http://103.113.68.207:8080';
 
         let sessionId = null;
         let analyticsSessionId = null;
@@ -588,9 +588,26 @@
             `;
         }
 
+        // Load model info
+        async function loadModelInfo() {
+            try {
+                const response = await fetch(`${getServerUrl()}/status`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.model) {
+                        document.getElementById('modelName').textContent = `Model: ${data.model}`;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading model info:', error);
+                document.getElementById('modelName').textContent = 'Model: Unknown';
+            }
+        }
+
         // Focus on input on load
         window.onload = () => {
             messageInput.focus();
+            loadModelInfo();
         };
     </script>
 </body>

@@ -25,7 +25,7 @@ class OllamaClient {
             json(json)
         }
         engine {
-            requestTimeout = 120_000 // 2 минуты на ответ
+            requestTimeout = 300_000 // 5 минут на ответ
         }
     }
 
